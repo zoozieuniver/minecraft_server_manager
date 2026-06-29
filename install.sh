@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Отримання поточної директорії скрипта
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Перезапуск у nix-shell для NixOS
+if [ -f /etc/NIXOS ] && [ -z "$MC_SERVER_GUI_NIX" ]; then
+    echo "❄️ NixOS detected. Running installer inside nix-shell..."
+    export MC_SERVER_GUI_NIX=1
+    exec nix-shell "$SCRIPT_DIR/shell.nix" --run "cd \"$SCRIPT_DIR\" && ./install.sh"
+fi
+
 # Шляхи (використовуємо абсолютні для стабільності)
 REAL_HOME=$(eval echo "~$USER")
 INSTALL_DIR="$REAL_HOME/.local/share/minecraft-server-manager"
@@ -123,8 +133,12 @@ fi
 
 cd "$BUILD_PATH"
 
-if [ "$OS_TYPE" = "nixos" ]; then
-    nix-shell --run "cargo build --release"
+if [ "$OS_TYPE" = "nixos" ] || [ -f /etc/NIXOS ]; then
+    if [ -n "$MC_SERVER_GUI_NIX" ]; then
+        cargo build --release
+    else
+        nix-shell "$BUILD_PATH/shell.nix" --run "cargo build --release"
+    fi
 else
     # Додаємо шлях до вантажу Cargo, якщо встановили через rustup
     [ -f "$REAL_HOME/.cargo/env" ] && source "$REAL_HOME/.cargo/env"
@@ -134,6 +148,7 @@ fi
 if [ $? -eq 0 ]; then
     echo "✅ Програму успішно скомпільовано!"
     cp "$BUILD_PATH/target/release/mc_server_gui" "$BINARY_ENGINE"
+    cp "$BUILD_PATH/shell.nix" "$INSTALL_DIR/shell.nix"
 else
     echo "❌ Помилка компіляції!" && exit 1
 fi
@@ -170,8 +185,8 @@ if [ -d "$REPO_DIR" ]; then
         echo -e "\e[36m⚙️ Перекомпіляція програми після оновлення...\e[0m"
         rm -f "$EXE_PATH"
         
-        if [ "$OS_TYPE" = "nixos" ]; then
-            nix-shell --run "cargo build --release"
+        if [ "$OS_TYPE" = "nixos" ] || [ -f /etc/NIXOS ]; then
+            nix-shell "$INSTALL_DIR/shell.nix" --run "cargo build --release"
         else
             [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
             cargo build --release
@@ -193,8 +208,8 @@ fi
 # Запуск бінарного файлу
 if [ -f "$EXE_PATH" ]; then
     # На NixOS запускаємо через nix-shell для правильного завантаження динамічних бібліотек
-    if [ "$OS_TYPE" = "nixos" ]; then
-        exec nix-shell "$REPO_DIR/shell.nix" --run "$EXE_PATH"
+    if [ "$OS_TYPE" = "nixos" ] || [ -f /etc/NIXOS ]; then
+        exec nix-shell "$INSTALL_DIR/shell.nix" --run "$EXE_PATH"
     else
         exec "$EXE_PATH" "$@"
     fi
