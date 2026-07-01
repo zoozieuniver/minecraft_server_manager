@@ -750,11 +750,27 @@ impl eframe::App for MinecraftManagerApp {
                         ui.end_row();
 
                         ui.label("Папка (директорія):");
-                        ui.text_edit_singleline(&mut state.path);
+                        ui.horizontal(|ui| {
+                            ui.text_edit_singleline(&mut state.path);
+                            if ui.button("📁").on_hover_text("Вибрати папку через провідник").clicked() {
+                                if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                    state.path = path.to_string_lossy().to_string();
+                                }
+                            }
+                        });
                         ui.end_row();
 
                         ui.label("Версія Minecraft:");
-                        ui.text_edit_singleline(&mut state.version);
+                        ui.horizontal(|ui| {
+                            ui.text_edit_singleline(&mut state.version);
+                            egui::ComboBox::from_id_source("mc_version_combo")
+                                .selected_text("")
+                                .show_ui(ui, |ui| {
+                                    for v in &["1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.2", "1.20.1", "1.19.4", "1.19.2", "1.18.2", "1.16.5"] {
+                                        ui.selectable_value(&mut state.version, v.to_string(), *v);
+                                    }
+                                });
+                        });
                         ui.end_row();
 
                         ui.label("Тип ядра:");
@@ -767,7 +783,16 @@ impl eframe::App for MinecraftManagerApp {
                         ui.end_row();
 
                         ui.label("Шлях до збірки .mrpack (локально):");
-                        ui.text_edit_singleline(&mut state.modpack_path);
+                        ui.horizontal(|ui| {
+                            ui.text_edit_singleline(&mut state.modpack_path);
+                            if ui.button("📁").on_hover_text("Вибрати файл .mrpack").clicked() {
+                                if let Some(path) = rfd::FileDialog::new()
+                                    .add_filter("Modpack", &["mrpack"])
+                                    .pick_file() {
+                                    state.modpack_path = path.to_string_lossy().to_string();
+                                }
+                            }
+                        });
                         ui.end_row();
                     });
 
