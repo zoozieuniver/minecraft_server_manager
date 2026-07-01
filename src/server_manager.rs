@@ -670,7 +670,9 @@ pub fn migrate_server(
     progress.store(0, std::sync::atomic::Ordering::Relaxed);
 
     // 1. Створення бекапу
-    let parent = srv_path.parent().unwrap_or(Path::new("/home/zoozie/Documents/servers_minecraft"));
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/home/zoozienix".to_string());
+    let default_parent = std::path::PathBuf::from(home).join("Documents").join("minecraft_servers");
+    let parent = srv_path.parent().unwrap_or(&default_parent);
     let backups_dir = parent.join("backups");
     if !backups_dir.exists() {
         fs::create_dir_all(&backups_dir).map_err(|e| format!("Не вдалося створити папку бекапів: {}", e))?;

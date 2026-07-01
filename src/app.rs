@@ -658,7 +658,10 @@ impl eframe::App for MinecraftManagerApp {
                     let (tx_fin, rx_fin) = channel();
                     self.creating_state = Some(CreatingServerState {
                         name: String::new(),
-                        path: "/home/zoozie/Documents/servers_minecraft/new_server".to_string(),
+                        path: {
+                             let home = std::env::var("HOME").unwrap_or_else(|_| "/home/zoozienix".to_string());
+                             format!("{}/Documents/minecraft_servers/new_server", home)
+                         },
                         version: "1.20.1".to_string(),
                         loader_type: "fabric".to_string(),
                         modpack_path: String::new(),
@@ -1293,7 +1296,9 @@ impl eframe::App for MinecraftManagerApp {
                                     let ctx_clone = ctx.clone();
 
                                     std::thread::spawn(move || {
-                                        let parent = srv_path.parent().unwrap_or(std::path::Path::new("/home/zoozie/Documents/servers_minecraft"));
+                                         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/zoozienix".to_string());
+                                         let default_parent = std::path::PathBuf::from(home).join("Documents").join("minecraft_servers");
+                                         let parent = srv_path.parent().unwrap_or(&default_parent);
                                         let backups_dir = parent.join("backups");
                                         if !backups_dir.exists() {
                                             let _ = std::fs::create_dir_all(&backups_dir);

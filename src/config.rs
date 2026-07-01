@@ -66,7 +66,8 @@ impl AppConfig {
         }
         
         // Дефолтна конфігурація: автовизначення існуючого сервера
-        let default_server_path = PathBuf::from("/home/zoozie/Documents/servers_minecraft/illya_vanilla");
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/home/zoozienix".to_string());
+        let default_server_path = PathBuf::from(home).join("Documents").join("minecraft_servers").join("illya_vanilla");
         let mut servers = Vec::new();
         if default_server_path.join("fabric-server-launch.jar").exists() || default_server_path.join("server.properties").exists() {
             servers.push(ServerConfig {

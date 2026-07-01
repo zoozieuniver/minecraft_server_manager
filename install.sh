@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Отримання поточної директорії скрипта
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -155,7 +155,7 @@ fi
 
 # 5. Створення лаунчера з підтримкою автооновлення
 cat << 'EOF' > "$LAUNCHER"
-#!/bin/bash
+#!/usr/bin/env bash
 
 INSTALL_DIR="$HOME/.local/share/minecraft-server-manager"
 REPO_DIR="$INSTALL_DIR/source"

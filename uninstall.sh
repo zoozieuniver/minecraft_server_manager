@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 INSTALL_DIR="$HOME/.local/share/minecraft-server-manager"
 BIN_DIR="$HOME/.local/bin"

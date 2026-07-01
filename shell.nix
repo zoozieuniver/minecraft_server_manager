@@ -4,23 +4,37 @@ pkgs.mkShell {
     rustc
     cargo
     pkg-config
+    cmake
   ];
   buildInputs = with pkgs; [
     gtk3
+    glib
+    gdk-pixbuf
+    cairo
+    pango
+    atk
+    wayland
     openssl
     libxkbcommon
     libX11
-    xorg.libXcursor
-    xorg.libXrandr
-    xorg.libXi
+    libxcursor
+    libxrandr
+    libxi
     vulkan-loader
   ];
   LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath (with pkgs; [
+    gtk3
+    glib
+    gdk-pixbuf
+    cairo
+    pango
+    atk
+    wayland
     libxkbcommon
     libX11
-    xorg.libXcursor
-    xorg.libXrandr
-    xorg.libXi
+    libxcursor
+    libxrandr
+    libxi
     vulkan-loader
     libGL
   ]);
