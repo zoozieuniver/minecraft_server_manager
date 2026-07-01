@@ -186,6 +186,7 @@ if [ -d "$REPO_DIR" ]; then
         rm -f "$EXE_PATH"
         
         if [ "$OS_TYPE" = "nixos" ] || [ -f /etc/NIXOS ]; then
+            cp "$REPO_DIR/shell.nix" "$INSTALL_DIR/shell.nix"
             nix-shell "$INSTALL_DIR/shell.nix" --run "cargo build --release"
         else
             [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
