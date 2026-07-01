@@ -5,7 +5,7 @@ pkgs.mkShell {
     cargo
     pkg-config
     cmake
-    jdk21
+    jdk25
   ];
   buildInputs = with pkgs; [
     gtk3
