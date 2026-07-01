@@ -67,11 +67,11 @@ impl AppConfig {
         
         // Дефолтна конфігурація: автовизначення існуючого сервера
         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/zoozienix".to_string());
-        let default_server_path = PathBuf::from(home).join("Documents").join("minecraft_servers").join("illya_vanilla");
+        let default_server_path = PathBuf::from(home).join("Documents").join("minecraft_servers").join("26_1_2");
         let mut servers = Vec::new();
         if default_server_path.join("fabric-server-launch.jar").exists() || default_server_path.join("server.properties").exists() {
             servers.push(ServerConfig {
-                name: "Illya Vanilla".to_string(),
+                name: "26_1_2".to_string(),
                 path: default_server_path,
                 max_ram: 8,
                 version: "26.1.2".to_string(),
