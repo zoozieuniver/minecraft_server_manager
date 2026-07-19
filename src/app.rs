@@ -762,7 +762,7 @@ impl eframe::App for MinecraftManagerApp {
 
                         ui.label("Версія Minecraft:");
                         ui.horizontal(|ui| {
-                            let r = ui.text_edit_singleline(&mut state.version);
+                            let _r = ui.text_edit_singleline(&mut state.version);
                             if !state.version.is_empty() && !state.version.starts_with("1.") {
                                 ui.colored_label(egui::Color32::from_rgb(220, 100, 100), "⚠ Невірний формат (має бути 1.x.x)")
                                     .on_hover_text("Версії Minecraft завжди починаються з '1.' (наприклад, '1.21.1').\nПри встановленні локальної збірки .mrpack виберіть її нижче, і версія/ядро заповняться автоматично.");
