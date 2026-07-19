@@ -762,7 +762,11 @@ impl eframe::App for MinecraftManagerApp {
 
                         ui.label("Версія Minecraft:");
                         ui.horizontal(|ui| {
-                            ui.text_edit_singleline(&mut state.version);
+                            let r = ui.text_edit_singleline(&mut state.version);
+                            if !state.version.is_empty() && !state.version.starts_with("1.") {
+                                ui.colored_label(egui::Color32::from_rgb(220, 100, 100), "⚠ Невірний формат (має бути 1.x.x)")
+                                    .on_hover_text("Версії Minecraft завжди починаються з '1.' (наприклад, '1.21.1').\nПри встановленні локальної збірки .mrpack виберіть її нижче, і версія/ядро заповняться автоматично.");
+                            }
                             egui::ComboBox::from_id_source("mc_version_combo")
                                 .selected_text("")
                                 .show_ui(ui, |ui| {
@@ -803,6 +807,10 @@ impl eframe::App for MinecraftManagerApp {
                                     .add_filter("Modpack", &["mrpack"])
                                     .pick_file() {
                                     state.modpack_path = path.to_string_lossy().to_string();
+                                    if let Ok((ver, loader)) = mod_manager::extract_modpack_version_and_loader(&path) {
+                                        state.version = ver;
+                                        state.loader_type = loader;
+                                    }
                                 }
                             }
                         });
