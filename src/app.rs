@@ -662,7 +662,7 @@ impl eframe::App for MinecraftManagerApp {
                              let home = std::env::var("HOME").unwrap_or_else(|_| "/home/zoozienix".to_string());
                              format!("{}/Documents/minecraft_servers/new_server", home)
                          },
-                        version: "1.20.1".to_string(),
+                        version: "26.2".to_string(),
                         loader_type: "fabric".to_string(),
                         modpack_path: String::new(),
                         modpack_online_url: None,
@@ -766,8 +766,21 @@ impl eframe::App for MinecraftManagerApp {
                             egui::ComboBox::from_id_source("mc_version_combo")
                                 .selected_text("")
                                 .show_ui(ui, |ui| {
-                                    for v in &["1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.2", "1.20.1", "1.19.4", "1.19.2", "1.18.2", "1.16.5"] {
+                                    // Custom modpack versions
+                                    for v in &["26.2", "26.1.2"] {
                                         ui.selectable_value(&mut state.version, v.to_string(), *v);
+                                    }
+                                    ui.separator();
+                                    
+                                    // Dynamic releases fetched online (or fallbacks)
+                                    if self.versions_fetched {
+                                        for v in self.all_releases.iter().take(20) {
+                                            ui.selectable_value(&mut state.version, v.clone(), v);
+                                        }
+                                    } else {
+                                        for v in &["1.22", "1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.18.2"] {
+                                            ui.selectable_value(&mut state.version, v.to_string(), *v);
+                                        }
                                     }
                                 });
                         });

@@ -21,7 +21,7 @@ fn default_max_ram() -> u32 {
 }
 
 fn default_version() -> String {
-    "26.1.2".to_string()
+    "26.2".to_string()
 }
 
 fn default_is_fabric() -> bool {
