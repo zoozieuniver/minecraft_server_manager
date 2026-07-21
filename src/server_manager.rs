@@ -391,6 +391,7 @@ pub fn create_new_server(
     target_path: &Path,
     version: &str,
     loader_type: &str,
+    custom_jar_path: Option<&Path>,
     logs_tx: Sender<String>,
 ) -> Result<(), String> {
     let _ = logs_tx.send(format!("[GUI] Створення нового сервера '{}' ({}) у {:?}", name, loader_type, target_path));
@@ -419,7 +420,48 @@ enforce-whitelist=true
             .map_err(|e| format!("Не вдалося створити server.properties: {}", e))?;
     }
 
-    if loader_type == "fabric" {
+    if let Some(jar_path) = custom_jar_path {
+        if !jar_path.exists() {
+            return Err(format!("Вказаний .jar файл не існує: {:?}", jar_path));
+        }
+        
+        let filename_lower = jar_path.file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_lowercase();
+            
+        if filename_lower.contains("installer") {
+            let _ = logs_tx.send(format!("[GUI] Копіювання інсталятора {:?}...", jar_path));
+            let installer_file = target_path.join("installer.jar");
+            fs::copy(jar_path, &installer_file)
+                .map_err(|e| format!("Не вдалося скопіювати .jar інсталятор: {}", e))?;
+
+            let _ = logs_tx.send("[GUI] Запуск встановлення з локального інсталятора (це може зайняти деякий час)...".to_string());
+            let status = Command::new("java")
+                .args(["-jar", "installer.jar", "--installServer"])
+                .current_dir(target_path)
+                .status()
+                .map_err(|e| format!("Не вдалося запустити інсталятор: {}", e))?;
+
+            let _ = fs::remove_file(installer_file);
+
+            if !status.success() {
+                return Err("Інсталятор JAR завершився з помилкою".to_string());
+            }
+            let _ = logs_tx.send("[GUI] Сервер успішно встановлено з локального інсталятора!".to_string());
+        } else {
+            let target_jar_name = if filename_lower.contains("fabric") {
+                "fabric-server-launch.jar"
+            } else {
+                "server.jar"
+            };
+            let dest_file = target_path.join(target_jar_name);
+            let _ = logs_tx.send(format!("[GUI] Копіювання локального сервера у {:?}...", dest_file));
+            fs::copy(jar_path, &dest_file)
+                .map_err(|e| format!("Не вдалося скопіювати .jar файл: {}", e))?;
+            let _ = logs_tx.send("[GUI] Локальний JAR файл успішно скопійовано!".to_string());
+        }
+    } else if loader_type == "fabric" {
         let _ = logs_tx.send("[GUI] Завантаження Fabric Installer...".to_string());
         let installer_url = "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar";
         let resp = ureq::get(installer_url)
@@ -726,7 +768,7 @@ pub fn migrate_server(
 
     // 3. Запуск встановлення нової версії
     let _ = logs_tx.send(format!("[Migration] Встановлення нової версії {} ({})", new_version, srv_loader_type));
-    create_new_server(srv_name, srv_path, new_version, srv_loader_type, logs_tx.clone())?;
+    create_new_server(srv_name, srv_path, new_version, srv_loader_type, None, logs_tx.clone())?;
     progress.store(85, std::sync::atomic::Ordering::Relaxed);
 
     // 4. Встановлення збірки (якщо вказано)

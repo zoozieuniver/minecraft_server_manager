@@ -17,6 +17,7 @@ struct CreatingServerState {
     version: String,
     loader_type: String,
     modpack_path: String,
+    custom_jar_path: String,
     modpack_online_url: Option<String>,
     modpack_online_title: Option<String>,
     search_query: String,
@@ -665,6 +666,7 @@ impl eframe::App for MinecraftManagerApp {
                         version: "26.2".to_string(),
                         loader_type: "fabric".to_string(),
                         modpack_path: String::new(),
+                        custom_jar_path: String::new(),
                         modpack_online_url: None,
                         modpack_online_title: None,
                         search_query: String::new(),
@@ -810,6 +812,38 @@ impl eframe::App for MinecraftManagerApp {
                                     if let Ok((ver, loader)) = mod_manager::extract_modpack_version_and_loader(&path) {
                                         state.version = ver;
                                         state.loader_type = loader;
+                                    }
+                                }
+                            }
+                        });
+                        ui.end_row();
+
+                        ui.label("Шлях до файлу сервера / інсталятора (.jar):");
+                        ui.horizontal(|ui| {
+                            ui.text_edit_singleline(&mut state.custom_jar_path);
+                            if ui.button("📁").on_hover_text("Вибрати локальний .jar файл").clicked() {
+                                if let Some(path) = rfd::FileDialog::new()
+                                    .add_filter("JAR Executable", &["jar"])
+                                    .pick_file() {
+                                    state.custom_jar_path = path.to_string_lossy().to_string();
+                                    
+                                    // Auto-fill name and path if empty
+                                    if state.name.trim().is_empty() {
+                                        if let Some(stem) = path.file_stem() {
+                                            state.name = stem.to_string_lossy().to_string();
+                                            let home = std::env::var("HOME").unwrap_or_else(|_| "/home/zoozienix".to_string());
+                                            state.path = format!("{}/Documents/minecraft_servers/{}", home, state.name);
+                                        }
+                                    }
+                                    
+                                    // Auto-detect loader type if installer jar
+                                    let filename_lower = path.file_name().unwrap_or_default().to_string_lossy().to_lowercase();
+                                    if filename_lower.contains("neoforge") {
+                                        state.loader_type = "neoforge".to_string();
+                                    } else if filename_lower.contains("forge") {
+                                        state.loader_type = "forge".to_string();
+                                    } else if filename_lower.contains("fabric") {
+                                        state.loader_type = "fabric".to_string();
                                     }
                                 }
                             }
@@ -969,13 +1003,18 @@ impl eframe::App for MinecraftManagerApp {
                         let version = state.version.clone();
                         let loader_type = state.loader_type.clone();
                         let modpack_path = state.modpack_path.clone();
+                        let custom_jar_path = if state.custom_jar_path.trim().is_empty() {
+                            None
+                        } else {
+                            Some(PathBuf::from(&state.custom_jar_path))
+                        };
                         let modpack_online_url = state.modpack_online_url.clone();
                         let tx_log = state.logs_sender.clone();
                         let tx_fin = state.tx_finish.clone();
                         let cf_key = self.config.curseforge_key.clone();
 
                         thread::spawn(move || {
-                            match server_manager::create_new_server(&name, &path, &version, &loader_type, tx_log.clone()) {
+                            match server_manager::create_new_server(&name, &path, &version, &loader_type, custom_jar_path.as_deref(), tx_log.clone()) {
                                 Ok(_) => {
                                     let mut final_modpack_path = None;
                                     if let Some(ref url) = modpack_online_url {
