@@ -32,12 +32,18 @@ fn default_loader_type() -> String {
     "fabric".to_string()
 }
 
+fn default_language() -> String {
+    "uk".to_string()
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AppConfig {
     pub servers: Vec<ServerConfig>,
     pub selected_index: usize,
     #[serde(default)]
     pub curseforge_key: String,
+    #[serde(default = "default_language")]
+    pub language: String,
 }
 
 impl AppConfig {

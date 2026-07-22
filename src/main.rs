@@ -5,6 +5,7 @@ mod whitelist;
 mod server_manager;
 mod mod_manager;
 mod tailscale;
+mod i18n;
 mod app;
 
 use app::MinecraftManagerApp;

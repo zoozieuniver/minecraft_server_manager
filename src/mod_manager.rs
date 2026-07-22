@@ -370,7 +370,7 @@ pub fn is_client_only_mod(jar_path: &Path) -> bool {
     
     // 1. Швидка фільтрація за назвою файлу для популярних клієнтських модів
     let client_only_substrings = [
-        "sodium", "rubidium", "embeddium", "iris-", "oculus", "canvas-", "optifine", "optifabric",
+        "sodium", "rubidium", "embeddium", "nvidium", "iris-", "oculus", "canvas-", "optifine", "optifabric",
         "dynamic-fps", "dynamicfps", "entityculling", "entity_texture_features",
         "animatica", "continuity", "cit-resewn", "citresewn", "zoomify", "distant-horizons", "distanthorizons",
         "presencefootsteps", "soundphysics", "sound-physics", "skinlayers", "skin-layers", "fabrishot",
@@ -379,7 +379,8 @@ pub fn is_client_only_mod(jar_path: &Path) -> bool {
         "smooth-boot", "fastquit", "isxander-main-menu", "credits", "modmenu", "mod-menu", "inventoryprofiles",
         "inventory-profiles", "itemphysic", "item-physic", "neat-", "appleskin", "apple-skin", "shulkerboxtooltip",
         "wthit", "had-enough-items", "jei-", "rei-", "emi-", "legendary-tooltips", "tooltips", "advancementinfo",
-        "detail-armor-bar", "armorbar", "damage-tilt", "damagetilt"
+        "detail-armor-bar", "armorbar", "damage-tilt", "damagetilt", "sodiumextra", "sodium-extra",
+        "reeses-sodium", "indium", "lambdabettergrass", "lambdynamicslights", "mousetweaks", "mouse-tweaks", "replaymod"
     ];
     
     for sub in &client_only_substrings {
@@ -429,6 +430,35 @@ pub fn is_client_only_mod(jar_path: &Path) -> bool {
     }
     
     false
+}
+
+// Сканування та вилучення клієнтських модів із директорії mods сервера
+pub fn purge_client_side_mods(server_path: &Path) -> Vec<String> {
+    let mods_dir = server_path.join("mods");
+    let mut removed = Vec::new();
+    if !mods_dir.exists() {
+        return removed;
+    }
+    
+    if let Ok(entries) = fs::read_dir(&mods_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(ext) = path.extension() {
+                    if ext == "jar" && is_client_only_mod(&path) {
+                        let filename = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                        let disabled_dir = mods_dir.join("client_mods_disabled");
+                        let _ = fs::create_dir_all(&disabled_dir);
+                        let dest = disabled_dir.join(&filename);
+                        if fs::rename(&path, &dest).is_ok() || fs::remove_file(&path).is_ok() {
+                            removed.push(filename);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    removed
 }
 
 // Вилучення іконки з JAR-файлу моду

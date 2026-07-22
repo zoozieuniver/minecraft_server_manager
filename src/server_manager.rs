@@ -64,9 +64,11 @@ impl ServerInstance {
             return;
         }
 
-        self.append_log("[GUI] Початок запуску сервера...".to_string());
-        self.status = ServerStatus::Starting;
-        self.last_poll = Instant::now();
+        // Автоматичне очищення клієнтських модів перед запуском
+        let purged = crate::mod_manager::purge_client_side_mods(&self.path);
+        if !purged.is_empty() {
+            self.append_log(format!("[GUI ⚠️] Переміщено клієнтські моди у mods/client_mods_disabled: {}", purged.join(", ")));
+        }
 
         // 1. (Ngrok launch bypassed, using Tailscale)
         // 2. Визначаємо яке ядро запускати

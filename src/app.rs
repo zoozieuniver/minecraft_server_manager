@@ -10,6 +10,7 @@ use crate::config::{AppConfig, ServerConfig};
 use crate::server_manager::{self, ServerInstance, ServerStatus};
 use crate::whitelist;
 use crate::mod_manager;
+use crate::i18n::tr;
 
 struct CreatingServerState {
     name: String,
@@ -600,8 +601,22 @@ impl eframe::App for MinecraftManagerApp {
 
         // Головний сайдбар (ліва панель)
         egui::SidePanel::left("left_panel").resizable(true).default_width(200.0).show(ctx, |ui| {
+            let lang = &self.config.language.clone();
             ui.vertical(|ui| {
-                ui.heading("📁 Мої Сервери");
+                ui.horizontal(|ui| {
+                    ui.heading(tr(lang, "📁 Мої Сервери", "📁 My Servers"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let current_lang = self.config.language.clone();
+                        if ui.selectable_label(current_lang == "en", "EN").clicked() {
+                            self.config.language = "en".to_string();
+                            self.save_app_config();
+                        }
+                        if ui.selectable_label(current_lang == "uk", "UA").clicked() {
+                            self.config.language = "uk".to_string();
+                            self.save_app_config();
+                        }
+                    });
+                });
                 ui.separator();
 
                 // Список серверів
@@ -636,7 +651,7 @@ impl eframe::App for MinecraftManagerApp {
                             // Показуємо кнопку видалення, якщо сервер вимкнений
                             if i < self.servers.len() && self.servers[i].status == ServerStatus::Offline {
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    if ui.button("🗑").on_hover_text("Видалити сервер зі списку").clicked() {
+                                    if ui.button("🗑").on_hover_text(tr(lang, "Видалити сервер зі списку", "Remove server from list")).clicked() {
                                         to_remove = Some(i);
                                     }
                                 });
@@ -654,7 +669,7 @@ impl eframe::App for MinecraftManagerApp {
                 ui.add_space(5.0);
 
                 // Кнопка створення нового сервера
-                if ui.button("➕ Створити сервер").clicked() {
+                if ui.button(tr(lang, "➕ Створити сервер", "➕ Create Server")).clicked() {
                     let (tx_log, rx_log) = channel();
                     let (tx_fin, rx_fin) = channel();
                     self.creating_state = Some(CreatingServerState {
@@ -1100,12 +1115,13 @@ impl eframe::App for MinecraftManagerApp {
                 });
                 ui.separator();
 
+                let lang = &self.config.language;
                 // 2. Таби (Вкладки)
                 ui.horizontal(|ui: &mut egui::Ui| {
-                    ui.selectable_value(&mut self.active_tab, 0, "⚙ Керування");
-                    ui.selectable_value(&mut self.active_tab, 1, "👥 Whitelist");
-                    ui.selectable_value(&mut self.active_tab, 2, "💻 Консоль");
-                    ui.selectable_value(&mut self.active_tab, 3, "🔌 Моди");
+                    ui.selectable_value(&mut self.active_tab, 0, tr(lang, "⚙ Керування", "⚙ Control"));
+                    ui.selectable_value(&mut self.active_tab, 1, tr(lang, "👥 Whitelist", "👥 Whitelist"));
+                    ui.selectable_value(&mut self.active_tab, 2, tr(lang, "💻 Консоль", "💻 Console"));
+                    ui.selectable_value(&mut self.active_tab, 3, tr(lang, "🔌 Моди", "🔌 Mods"));
                 });
                 ui.separator();
 
@@ -1255,6 +1271,7 @@ impl eframe::App for MinecraftManagerApp {
                             let current_difficulty = srv.read_property("difficulty").unwrap_or_else(|| "normal".to_string());
                             let current_hardcore = srv.read_property("hardcore").unwrap_or_else(|| "false".to_string()) == "true";
                             let current_whitelist = srv.read_property("white-list").unwrap_or_else(|| "false".to_string()) == "true";
+                            let current_online_mode = srv.read_property("online-mode").unwrap_or_else(|| "false".to_string()) == "true";
                             let current_view_distance_str = srv.read_property("view-distance").unwrap_or_else(|| "10".to_string());
                             let current_simulation_distance_str = srv.read_property("simulation-distance").unwrap_or_else(|| "10".to_string());
                             let current_view_distance = current_view_distance_str.trim().parse::<u32>().unwrap_or(10);
@@ -1327,6 +1344,18 @@ impl eframe::App for MinecraftManagerApp {
                                         let mut wl = current_whitelist;
                                         if ui.checkbox(&mut wl, "Увімкнути whitelist").changed() {
                                             let _ = srv.write_property("white-list", if wl { "true" } else { "false" });
+                                        }
+                                    });
+                                    ui.end_row();
+
+                                    ui.horizontal(|ui| {
+                                        ui.label(tr(lang, "Перевірка ліцензії (online-mode):", "License Check (online-mode):"));
+                                        ui.label("❓").on_hover_text(tr(lang, "Перевірка ліцензії Mojang для підключення гравців та відображення скінів.", "Check Mojang license for connecting players and skin display."));
+                                    });
+                                    ui.horizontal(|ui| {
+                                        let mut om = current_online_mode;
+                                        if ui.checkbox(&mut om, tr(lang, "Увімкнути online-mode (ліцензія)", "Enable online-mode (license)")).changed() {
+                                            let _ = srv.write_property("online-mode", if om { "true" } else { "false" });
                                         }
                                     });
                                     ui.end_row();
@@ -1783,7 +1812,7 @@ impl eframe::App for MinecraftManagerApp {
                                 let cf_key = self.config.curseforge_key.clone();
 
                                 ui.horizontal(|ui| {
-                                    if ui.add_enabled(!self.auto_update_is_running, egui::Button::new("🔄 Авто-оновлення модів")).clicked() {
+                                    if ui.add_enabled(!self.auto_update_is_running, egui::Button::new(tr(lang, "🔄 Авто-оновлення модів", "🔄 Auto-update mods"))).clicked() {
                                         self.auto_update_is_running = true;
                                         self.auto_update_log_buffer.clear();
                                         
@@ -1802,6 +1831,13 @@ impl eframe::App for MinecraftManagerApp {
                                             ctx_clone.request_repaint();
                                         });
                                     }
+
+                                    if ui.button(tr(lang, "🧹 Очистити клієнтські моди", "🧹 Purge Client Mods"))
+                                        .on_hover_text(tr(lang, "Видалити/деактивувати клієнтські моди (Sodium, Iris тощо), які можуть зламати сервер.", "Purge/disable client-only mods (Sodium, Iris, etc.) that can crash the server."))
+                                        .clicked() {
+                                            let _ = mod_manager::purge_client_side_mods(&server_path);
+                                            self.sync_installed_mods_cache(true);
+                                        }
                                 });
 
                                 if self.auto_update_is_running {
