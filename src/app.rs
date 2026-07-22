@@ -1115,13 +1115,13 @@ impl eframe::App for MinecraftManagerApp {
                 });
                 ui.separator();
 
-                let lang = &self.config.language;
+                let lang = self.config.language.clone();
                 // 2. Таби (Вкладки)
                 ui.horizontal(|ui: &mut egui::Ui| {
-                    ui.selectable_value(&mut self.active_tab, 0, tr(lang, "⚙ Керування", "⚙ Control"));
-                    ui.selectable_value(&mut self.active_tab, 1, tr(lang, "👥 Whitelist", "👥 Whitelist"));
-                    ui.selectable_value(&mut self.active_tab, 2, tr(lang, "💻 Консоль", "💻 Console"));
-                    ui.selectable_value(&mut self.active_tab, 3, tr(lang, "🔌 Моди", "🔌 Mods"));
+                    ui.selectable_value(&mut self.active_tab, 0, tr(&lang, "⚙ Керування", "⚙ Control"));
+                    ui.selectable_value(&mut self.active_tab, 1, tr(&lang, "👥 Whitelist", "👥 Whitelist"));
+                    ui.selectable_value(&mut self.active_tab, 2, tr(&lang, "💻 Консоль", "💻 Console"));
+                    ui.selectable_value(&mut self.active_tab, 3, tr(&lang, "🔌 Моди", "🔌 Mods"));
                 });
                 ui.separator();
 
@@ -1349,12 +1349,12 @@ impl eframe::App for MinecraftManagerApp {
                                     ui.end_row();
 
                                     ui.horizontal(|ui| {
-                                        ui.label(tr(lang, "Перевірка ліцензії (online-mode):", "License Check (online-mode):"));
-                                        ui.label("❓").on_hover_text(tr(lang, "Перевірка ліцензії Mojang для підключення гравців та відображення скінів.", "Check Mojang license for connecting players and skin display."));
+                                        ui.label(tr(&lang, "Перевірка ліцензії (online-mode):", "License Check (online-mode):"));
+                                        ui.label("❓").on_hover_text(tr(&lang, "Перевірка ліцензії Mojang для підключення гравців та відображення скінів.", "Check Mojang license for connecting players and skin display."));
                                     });
                                     ui.horizontal(|ui| {
                                         let mut om = current_online_mode;
-                                        if ui.checkbox(&mut om, tr(lang, "Увімкнути online-mode (ліцензія)", "Enable online-mode (license)")).changed() {
+                                        if ui.checkbox(&mut om, tr(&lang, "Увімкнути online-mode (ліцензія)", "Enable online-mode (license)")).changed() {
                                             let _ = srv.write_property("online-mode", if om { "true" } else { "false" });
                                         }
                                     });
@@ -1812,7 +1812,7 @@ impl eframe::App for MinecraftManagerApp {
                                 let cf_key = self.config.curseforge_key.clone();
 
                                 ui.horizontal(|ui| {
-                                    if ui.add_enabled(!self.auto_update_is_running, egui::Button::new(tr(lang, "🔄 Авто-оновлення модів", "🔄 Auto-update mods"))).clicked() {
+                                    if ui.add_enabled(!self.auto_update_is_running, egui::Button::new(tr(&lang, "🔄 Авто-оновлення модів", "🔄 Auto-update mods"))).clicked() {
                                         self.auto_update_is_running = true;
                                         self.auto_update_log_buffer.clear();
                                         
@@ -1832,8 +1832,8 @@ impl eframe::App for MinecraftManagerApp {
                                         });
                                     }
 
-                                    if ui.button(tr(lang, "🧹 Очистити клієнтські моди", "🧹 Purge Client Mods"))
-                                        .on_hover_text(tr(lang, "Видалити/деактивувати клієнтські моди (Sodium, Iris тощо), які можуть зламати сервер.", "Purge/disable client-only mods (Sodium, Iris, etc.) that can crash the server."))
+                                    if ui.button(tr(&lang, "🧹 Очистити клієнтські моди", "🧹 Purge Client Mods"))
+                                        .on_hover_text(tr(&lang, "Видалити/деактивувати клієнтські моди (Sodium, Iris тощо), які можуть зламати сервер.", "Purge/disable client-only mods (Sodium, Iris, etc.) that can crash the server."))
                                         .clicked() {
                                             let _ = mod_manager::purge_client_side_mods(&server_path);
                                             self.sync_installed_mods_cache(true);

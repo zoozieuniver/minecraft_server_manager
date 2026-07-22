@@ -90,6 +90,7 @@ impl AppConfig {
             servers,
             selected_index: 0,
             curseforge_key: String::new(),
+            language: "uk".to_string(),
         }
     }
 
